@@ -1,6 +1,6 @@
-use leptos::prelude::*;
 use crate::components::article_card::ArticleCard;
 use crate::db::models::Article;
+use leptos::prelude::*;
 
 #[component]
 pub fn ArticleList(articles: Vec<Article>) -> impl IntoView {
@@ -9,7 +9,8 @@ pub fn ArticleList(articles: Vec<Article>) -> impl IntoView {
 			<div class="empty-state">
 				<p>"No interesting articles yet. The background worker is fetching and analyzing articles..."</p>
 			</div>
-		}.into_any()
+		}
+		.into_any()
 	} else {
 		view! {
 			<div class="article-list">
@@ -17,6 +18,7 @@ pub fn ArticleList(articles: Vec<Article>) -> impl IntoView {
 					.map(|article| view! { <ArticleCard article=article /> })
 					.collect_view()}
 			</div>
-		}.into_any()
+		}
+		.into_any()
 	}
 }

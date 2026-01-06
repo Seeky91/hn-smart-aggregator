@@ -5,12 +5,8 @@ use leptos_router::{
 	StaticSegment,
 };
 
-use crate::components::{
-	article_list::ArticleList,
-	theme_toggle::ThemeToggle,
-	sort_controls::SortControls,
-};
-use crate::db::models::{SortField, SortDirection};
+use crate::components::{article_list::ArticleList, sort_controls::SortControls, theme_toggle::ThemeToggle};
+use crate::db::models::{SortDirection, SortField};
 use crate::server_fns::articles::get_interesting_articles;
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
@@ -55,19 +51,13 @@ pub fn App() -> impl IntoView {
 }
 
 #[component]
-fn HomePage(
-	dark_mode: Signal<bool>,
-	set_dark_mode: WriteSignal<bool>,
-) -> impl IntoView {
+fn HomePage(dark_mode: Signal<bool>, set_dark_mode: WriteSignal<bool>) -> impl IntoView {
 	// Create sorting signals with defaults
 	let (sort_field, set_sort_field) = signal(SortField::Date);
 	let (sort_direction, set_sort_direction) = signal(SortDirection::Descending);
 
 	// Create a resource that depends on sort parameters
-	let articles = Resource::new(
-		move || (sort_field.get(), sort_direction.get()),
-		|(field, direction)| get_interesting_articles(field, direction),
-	);
+	let articles = Resource::new(move || (sort_field.get(), sort_direction.get()), |(field, direction)| get_interesting_articles(field, direction));
 
 	view! {
 		<div class="container">

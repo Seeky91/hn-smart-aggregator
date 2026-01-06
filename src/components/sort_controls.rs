@@ -1,13 +1,8 @@
+use crate::db::models::{SortDirection, SortField};
 use leptos::prelude::*;
-use crate::db::models::{SortField, SortDirection};
 
 #[component]
-pub fn SortControls(
-	sort_field: Signal<SortField>,
-	set_sort_field: WriteSignal<SortField>,
-	sort_direction: Signal<SortDirection>,
-	set_sort_direction: WriteSignal<SortDirection>,
-) -> impl IntoView {
+pub fn SortControls(sort_field: Signal<SortField>, set_sort_field: WriteSignal<SortField>, sort_direction: Signal<SortDirection>, set_sort_direction: WriteSignal<SortDirection>) -> impl IntoView {
 	view! {
 		<div class="sort-controls">
 			<label for="sort-field">"Sort by:"</label>
@@ -24,15 +19,9 @@ pub fn SortControls(
 					set_sort_field.set(field);
 				}
 			>
-				<option value="date" selected={move || sort_field.get() == SortField::Date}>
-					"Date"
-				</option>
-				<option value="score" selected={move || sort_field.get() == SortField::Score}>
-					"Score"
-				</option>
-				<option value="priority" selected={move || sort_field.get() == SortField::Priority}>
-					"Priority"
-				</option>
+				<option value="date" selected={move || sort_field.get() == SortField::Date}>"Date"</option>
+				<option value="score" selected={move || sort_field.get() == SortField::Score}>"Score"</option>
+				<option value="priority" selected={move || sort_field.get() == SortField::Priority}>"Priority"</option>
 			</select>
 
 			<select

@@ -5,7 +5,7 @@ use anyhow::Result;
 use sqlx::SqlitePool;
 
 #[cfg(feature = "ssr")]
-use crate::db::models::{Article, HnItem, AnalysisResult, SortField, SortDirection};
+use crate::db::models::{AnalysisResult, Article, HnItem, SortDirection, SortField};
 
 #[cfg(feature = "ssr")]
 pub async fn upsert_article(pool: &SqlitePool, item: &HnItem) -> Result<()> {
@@ -19,7 +19,7 @@ pub async fn upsert_article(pool: &SqlitePool, item: &HnItem) -> Result<()> {
 		ON CONFLICT(hn_id) DO UPDATE SET
 			score = excluded.score,
 			title = excluded.title
-		"#
+		"#,
 	)
 	.bind(item.id)
 	.bind(title)
@@ -41,7 +41,7 @@ pub async fn get_unanalyzed_articles(pool: &SqlitePool) -> Result<Vec<Article>> 
 		FROM articles
 		WHERE ai_analysis_done = 0
 		ORDER BY fetched_at DESC
-		"#
+		"#,
 	)
 	.fetch_all(pool)
 	.await?;
@@ -50,11 +50,7 @@ pub async fn get_unanalyzed_articles(pool: &SqlitePool) -> Result<Vec<Article>> 
 }
 
 #[cfg(feature = "ssr")]
-pub async fn update_analysis(
-	pool: &SqlitePool,
-	article_id: i64,
-	analysis: AnalysisResult,
-) -> Result<()> {
+pub async fn update_analysis(pool: &SqlitePool, article_id: i64, analysis: AnalysisResult) -> Result<()> {
 	sqlx::query(
 		r#"
 		UPDATE articles
@@ -63,7 +59,7 @@ pub async fn update_analysis(
 		    reason = ?,
 		    priority = ?
 		WHERE id = ?
-		"#
+		"#,
 	)
 	.bind(analysis.relevant)
 	.bind(analysis.reason)
@@ -76,11 +72,7 @@ pub async fn update_analysis(
 }
 
 #[cfg(feature = "ssr")]
-pub async fn get_interesting_articles(
-	pool: &SqlitePool,
-	sort_field: SortField,
-	sort_direction: SortDirection,
-) -> Result<Vec<Article>> {
+pub async fn get_interesting_articles(pool: &SqlitePool, sort_field: SortField, sort_direction: SortDirection) -> Result<Vec<Article>> {
 	// Build ORDER BY clause dynamically
 	let order_by = match sort_field {
 		SortField::Date => match sort_direction {
@@ -109,9 +101,7 @@ pub async fn get_interesting_articles(
 		order_by
 	);
 
-	let articles = sqlx::query_as::<_, Article>(&query)
-		.fetch_all(pool)
-		.await?;
+	let articles = sqlx::query_as::<_, Article>(&query).fetch_all(pool).await?;
 
 	Ok(articles)
 }

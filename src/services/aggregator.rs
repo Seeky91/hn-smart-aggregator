@@ -5,7 +5,7 @@ use std::sync::Arc;
 use anyhow::Result;
 
 #[cfg(feature = "ssr")]
-use tokio::time::{Duration, interval};
+use tokio::time::{interval, Duration};
 
 #[cfg(feature = "ssr")]
 use crate::config::Config;
@@ -17,10 +17,7 @@ use crate::db::repository;
 use crate::services::{hn_client, ollama_client};
 
 #[cfg(feature = "ssr")]
-pub async fn run_aggregator_loop(
-	db_pool: sqlx::SqlitePool,
-	config: Arc<Config>,
-) -> Result<()> {
+pub async fn run_aggregator_loop(db_pool: sqlx::SqlitePool, config: Arc<Config>) -> Result<()> {
 	// Run immediately on startup
 	tracing::info!("Running initial aggregator cycle...");
 	if let Err(e) = fetch_and_analyze_cycle(&db_pool, &config).await {
@@ -42,10 +39,7 @@ pub async fn run_aggregator_loop(
 }
 
 #[cfg(feature = "ssr")]
-async fn fetch_and_analyze_cycle(
-	db_pool: &sqlx::SqlitePool,
-	config: &Config,
-) -> Result<()> {
+async fn fetch_and_analyze_cycle(db_pool: &sqlx::SqlitePool, config: &Config) -> Result<()> {
 	// Step 1: Fetch top 15 HN stories
 	tracing::info!("Fetching top 15 HN stories...");
 	let story_ids = hn_client::fetch_top_stories(15).await?;
@@ -74,19 +68,9 @@ async fn fetch_and_analyze_cycle(
 
 	// Step 4: Analyze with Ollama (sequential to avoid overwhelming local Ollama)
 	for article in articles {
-		match ollama_client::analyze_article(
-			&config.persona,
-			&article,
-			&config.ollama_url,
-			&config.ollama_model,
-		).await {
+		match ollama_client::analyze_article(&config.persona, &article, &config.ollama_url, &config.ollama_model).await {
 			Ok(analysis) => {
-				tracing::info!(
-					"Article '{}' analyzed: relevant={}, priority={}",
-					article.title,
-					analysis.relevant,
-					analysis.priority
-				);
+				tracing::info!("Article '{}' analyzed: relevant={}, priority={}", article.title, analysis.relevant, analysis.priority);
 				if let Err(e) = repository::update_analysis(db_pool, article.id, analysis).await {
 					tracing::error!("Failed to save analysis for article {}: {}", article.id, e);
 				}

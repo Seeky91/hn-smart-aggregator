@@ -1,23 +1,18 @@
 #[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-	use std::sync::Arc;
 	use axum::Router;
+	use hn_smart_aggregator::app::*;
+	use hn_smart_aggregator::config::Config;
+	use hn_smart_aggregator::services::aggregator;
+	use hn_smart_aggregator::state::AppState;
 	use leptos::config::get_configuration;
 	use leptos::prelude::*;
 	use leptos_axum::{generate_route_list, LeptosRoutes};
-	use hn_smart_aggregator::app::*;
-	use hn_smart_aggregator::config::Config;
-	use hn_smart_aggregator::state::AppState;
-	use hn_smart_aggregator::services::aggregator;
+	use std::sync::Arc;
 
 	// Initialize logging
-	tracing_subscriber::fmt()
-		.with_env_filter(
-			tracing_subscriber::EnvFilter::try_from_default_env()
-				.unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info"))
-		)
-		.init();
+	tracing_subscriber::fmt().with_env_filter(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info"))).init();
 
 	tracing::info!("Starting Smart HN Aggregator...");
 
@@ -34,10 +29,7 @@ async fn main() -> anyhow::Result<()> {
 	tracing::info!("Migrations completed");
 
 	// Create app state
-	let app_state = AppState {
-		db_pool: db_pool.clone(),
-		config: config.clone(),
-	};
+	let app_state = AppState { db_pool: db_pool.clone(), config: config.clone() };
 
 	// Spawn background worker
 	let worker_pool = db_pool.clone();

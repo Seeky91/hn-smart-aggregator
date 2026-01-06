@@ -1,16 +1,12 @@
-use leptos::prelude::*;
 use crate::db::models::Article;
+use leptos::prelude::*;
 
 #[component]
 pub fn ArticleCard(article: Article) -> impl IntoView {
 	view! {
 		<div class="article-card">
 			<h3>
-				<a
-					href={article.url.clone().unwrap_or_default()}
-					target="_blank"
-					rel="noopener noreferrer"
-				>
+				<a href={article.url.clone().unwrap_or_default()} target="_blank" rel="noopener noreferrer">
 					{article.title.clone()}
 				</a>
 			</h3>
