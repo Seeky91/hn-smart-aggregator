@@ -1,19 +1,19 @@
-version: '3.8'
-
 services:
   app:
     build:
-      context: ..
+      context: .
       dockerfile: docker/Dockerfile
     ports:
-      - "3000:3000"
+      - "30082:30082"
     environment:
-      - DATABASE_URL=sqlite:///data/articles.db
+      - DATABASE_URL=sqlite:/data/articles.db?mode=rwc
+      - LEPTOS_SITE_ADDR=0.0.0.0:30082
       - OLLAMA_URL=http://192.168.1.100:30068
       - OLLAMA_MODEL=qwen2.5:7b
       - RUST_LOG=info
     volumes:
-      - db-data:/data
+      - ./config/persona.txt:/app/persona.txt:ro
+      - hn_db_data:/data
     restart: unless-stopped
     networks:
       - hn-aggregator
@@ -23,5 +23,4 @@ networks:
     driver: bridge
 
 volumes:
-  db-data:
-    driver: local
+  hn_db_data:

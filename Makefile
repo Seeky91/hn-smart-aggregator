@@ -25,7 +25,7 @@ dev:
 
 # Docker (Offline mode SQLx)
 prepare:
-	cargo sqlx prepare --database-url sqlite:articles.db
+	cargo sqlx prepare -- --features ssr
 
 # Full docker build
 docker: prepare
