@@ -1,0 +1,14 @@
+hard_tabs = true
+tab_spaces = 4
+max_width = 200
+spaces_within_parens_and_brackets = false
+
+struct_lit_single_line = true
+fn_single_line = true
+if_single_line = true
+where_single_line = true
+
+brace_style = "PreferSameLine"
+use_small_heuristics = "Max"
+
+imports_granularity = "Crate"
