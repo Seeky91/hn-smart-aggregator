@@ -1,91 +1,137 @@
-<picture>
-    <source srcset="https://raw.githubusercontent.com/leptos-rs/leptos/main/docs/logos/Leptos_logo_Solid_White.svg" media="(prefers-color-scheme: dark)">
-    <img src="https://raw.githubusercontent.com/leptos-rs/leptos/main/docs/logos/Leptos_logo_RGB.svg" alt="Leptos Logo">
-</picture>
+# Smart Hacker News Aggregator 🦀🤖
 
-# Leptos Axum Starter Template
+An AI-powered Hacker News aggregator that automatically fetches, filters, and prioritizes stories based on your personal interests using a local LLM (Ollama).
 
-This is a template for use with the [Leptos](https://github.com/leptos-rs/leptos) web framework and the [cargo-leptos](https://github.com/akesson/cargo-leptos) tool using [Axum](https://github.com/tokio-rs/axum).
+## ✨ Features
 
-## Creating your template repo
+- **Automated Story Fetching**: Pulls top stories from Hacker News hourly.
+- **AI-Powered Filtering**: Uses Ollama to analyze articles based on your configurable persona.
+- **Personalized Prioritization**: Stories are ranked (1 to 5) based on relevance to your specific interests.
+- **Modern Web Interface**: Clean, responsive UI built with Leptos (Rust) featuring dark/light mode.
+- **Background Processing**: Fully automated background processing via a dedicated worker.
 
-If you don't have `cargo-leptos` installed you can install it with
+## 🛠 Tech Stack
 
-```bash
-cargo install cargo-leptos --locked
+- **[Leptos](https://leptos.dev/)** - Full-stack Rust web framework (v0.8)
+- **[Axum](https://github.com/tokio-rs/axum)** - Web server framework
+- **[SQLite](https://www.sqlite.org/)** + **[sqlx](https://github.com/launchbadge/sqlx)** - Database with async Rust driver
+- **[Ollama](https://ollama.ai/)** - Local LLM for article analysis
+- **[Tokio](https://tokio.rs/)** - Async runtime for background tasks
+- **WebAssembly** - Client-side rendering via Leptos
+
+---
+
+## 🚀 Local Development
+
+### 1. Prerequisites
+- Rust (nightly toolchain)
+- Node.js & npm (for SASS compilation)
+- [Ollama](https://ollama.ai/) running locally
+
+### 2. Setup
+``` bash
+# Install development tools (cargo-leptos, sqlx-cli, wasm target)
+make setup
+
+# Configure your persona (what you care about)
+cp config/persona.example.txt config/persona.txt
+# Edit config/persona.txt with your own bio/interests
+
+# Set up environment variables
+cp .env.example .env
 ```
 
-Then run
-```bash
-cargo leptos new --git https://github.com/leptos-rs/start-axum
+### 3. Run
+``` bash
+# Initialize the database and run migrations
+make db
+
+# Start development mode with hot-reload
+make dev
+```
+Visit `http://localhost:3000`.
+
+---
+
+## 🐳 Docker Deployment
+
+### Building the Image
+Before building for Docker, you must prepare the SQLx metadata for offline compilation:
+``` bash
+make prepare
+docker build -f docker/Dockerfile -t hn-smart-aggregator:latest .
 ```
 
-to generate a new project template.
+### Export for NAS (Synology, TrueNAS, etc.)
+If you want to move the image to a NAS without using a public registry:
+``` bash
+# 1. Save and compress the image
+docker save hn-smart-aggregator:latest | gzip > hn-smart-aggregator-v1.tar.gz
 
-```bash
-cd hn-smart-aggregator
+# 2. Transfer the file to your NAS, then load it via SSH:
+docker load -i /path/to/hn-smart-aggregator-v1.tar.gz
 ```
 
-to go to your newly created project.
-Feel free to explore the project structure, but the best place to start with your application code is in `src/app.rs`.
-Additionally, Cargo.toml may need updating as new versions of the dependencies are released, especially if things are not working after a `cargo update`.
+---
 
-## Running your project
+## 🏠 NAS Deployment (Docker Compose)
 
-```bash
-cargo leptos watch
+On NAS systems (especially **TrueNAS SCALE**), **always use absolute paths** for volumes to avoid mounting errors.
+
+### Docker Compose Example
+``` yaml
+services:
+  app:
+    image: hn-smart-aggregator:latest
+    container_name: hn-smart-aggregator
+    ports:
+      - "30082:30082"
+    environment:
+      - DATABASE_URL=sqlite:///data/articles.db?mode=rwc
+      - LEPTOS_SITE_ADDR=0.0.0.0:30082
+      - OLLAMA_URL=http://192.168.1.XX:11434 # IP of your Ollama server
+      - OLLAMA_MODEL=qwen2.5:7b
+      - RUST_LOG=info
+    volumes:
+      # IMPORTANT: Use ABSOLUTE paths on NAS
+      - /mnt/tank/apps/hn-aggregator/config/persona.txt:/app/persona.txt:ro
+      - /mnt/tank/apps/hn-aggregator/db-data:/data
+    restart: unless-stopped
 ```
 
-## Installing Additional Tools
+---
 
-By default, `cargo-leptos` uses `nightly` Rust, `cargo-generate`, and `sass`. If you run into any trouble, you may need to install one or more of these tools.
+## ⚙️ Configuration
 
-1. `rustup toolchain install nightly --allow-downgrade` - make sure you have Rust nightly
-2. `rustup target add wasm32-unknown-unknown` - add the ability to compile Rust to WebAssembly
-3. `cargo install cargo-generate` - install `cargo-generate` binary (should be installed automatically in future)
-4. `npm install -g sass` - install `dart-sass` (should be optional in future
-5. Run `npm install` in end2end subdirectory before test
+### Persona (`config/persona.txt`)
+The AI uses this text to score articles. 
+**Example:** *"I am a software engineer interested in Rust, distributed systems and developer tools. I also enjoy reading about open-source AI advancements."*
 
-## Compiling for Release
-```bash
-cargo leptos build --release
-```
+### Environment Variables
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DATABASE_URL` | SQLite connection string. Use `?mode=rwc` for Docker. | `sqlite:///data/articles.db?mode=rwc` |
+| `OLLAMA_URL` | URL of your Ollama API. | `http://localhost:11434` |
+| `OLLAMA_MODEL` | The model used for analysis (e.g., qwen2.5:7b). | `qwen2.5:7b` |
+| `LEPTOS_SITE_ADDR` | The internal address the app listens on. | `0.0.0.0:30082` |
 
-Will generate your server binary in target/release and your site package in target/site
+---
 
-## Testing Your Project
-```bash
-cargo leptos end-to-end
-```
+## ❌ Troubleshooting
 
-```bash
-cargo leptos end-to-end --release
-```
+### "Unable to open database file (code 14)"
+This happens when SQLite cannot create journal files on the mounted volume.
+- **Solution**: Ensure your `DATABASE_URL` ends with `?mode=rwc`.
+- **Solution**: On Windows host (WSL2), use a **Named Volume** instead of a Bind Mount for the `/data` folder.
 
-Cargo-leptos uses Playwright as the end-to-end test tool.
-Tests are located in end2end/tests directory.
+### "Mount: not a directory" (TrueNAS SCALE)
+If you mount a file that doesn't exist on the host, Docker creates a directory by default.
+- **Solution**: Delete the fake directory `rm -rf persona.txt` and create a real text file before starting the container.
 
-## Executing a Server on a Remote Machine Without the Toolchain
-After running a `cargo leptos build --release` the minimum files needed are:
+### Background worker not starting
+The app waits for the database to be migrated before starting the background loop. Check logs: `docker compose logs -f app`.
 
-1. The server binary located in `target/server/release`
-2. The `site` directory and all files within located in `target/site`
+---
 
-Copy these files to your remote server. The directory structure should be:
-```text
-hn-smart-aggregator
-site/
-```
-Set the following environment variables (updating for your project as needed):
-```sh
-export LEPTOS_OUTPUT_NAME="hn-smart-aggregator"
-export LEPTOS_SITE_ROOT="site"
-export LEPTOS_SITE_PKG_DIR="pkg"
-export LEPTOS_SITE_ADDR="127.0.0.1:3000"
-export LEPTOS_RELOAD_PORT="3001"
-```
-Finally, run the server binary.
-
-## Licensing
-
-This template itself is released under the Unlicense. You should replace the LICENSE for your own application with an appropriate license if you plan to release it publicly.
+## 📜 License
+MIT
