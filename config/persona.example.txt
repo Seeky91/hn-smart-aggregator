@@ -1,1 +1,4 @@
-Prompt for my persona
+Prompt for my persona (Explain what articles you want to keep. Don't remove the output structure)
+
+### MANDATORY OUTPUT (STRICT JSON):
+{"relevant": boolean, "priority": integer, "reason": "string"}
