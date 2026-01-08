@@ -13,6 +13,7 @@ pub struct Article {
 	pub is_interesting: bool,
 	pub reason: Option<String>,
 	pub priority: Option<i64>,
+	pub category: Option<String>,
 }
 
 // HN API response models (server-side only)
@@ -36,6 +37,13 @@ pub struct AnalysisResult {
 	pub relevant: bool,
 	pub reason: String,
 	pub priority: i64,
+	#[serde(default = "default_category")]
+	pub category: String,
+}
+
+#[cfg(feature = "ssr")]
+fn default_category() -> String {
+	"Other".to_string()
 }
 
 // Sorting enums (shared between client and server)

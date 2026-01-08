@@ -11,8 +11,11 @@ services:
       - OLLAMA_URL=http://192.168.1.100:30068
       - OLLAMA_MODEL=qwen2.5:7b
       - RUST_LOG=info
+      - FETCH_INTERVAL_MINUTES=60
+      - TOP_STORIES_COUNT=15
     volumes:
       - ./config/persona.txt:/app/persona.txt:ro
+      - ./config/categories.txt:/app/categories.txt:ro
       - hn_db_data:/data
     restart: unless-stopped
     networks:

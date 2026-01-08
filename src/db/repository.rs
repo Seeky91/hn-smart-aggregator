@@ -37,7 +37,7 @@ pub async fn get_unanalyzed_articles(pool: &SqlitePool) -> Result<Vec<Article>> 
 	let articles = sqlx::query_as::<_, Article>(
 		r#"
 		SELECT id, hn_id, title, url, score, timestamp, fetched_at,
-		       ai_analysis_done, is_interesting, reason, priority
+		       ai_analysis_done, is_interesting, reason, priority, category
 		FROM articles
 		WHERE ai_analysis_done = 0
 		ORDER BY fetched_at DESC
@@ -57,13 +57,15 @@ pub async fn update_analysis(pool: &SqlitePool, article_id: i64, analysis: Analy
 		SET ai_analysis_done = 1,
 		    is_interesting = ?,
 		    reason = ?,
-		    priority = ?
+		    priority = ?,
+		    category = ?
 		WHERE id = ?
 		"#,
 	)
 	.bind(analysis.relevant)
 	.bind(analysis.reason)
 	.bind(analysis.priority)
+	.bind(analysis.category)
 	.bind(article_id)
 	.execute(pool)
 	.await?;
@@ -92,7 +94,7 @@ pub async fn get_interesting_articles(pool: &SqlitePool, sort_field: SortField, 
 	let query = format!(
 		r#"
 		SELECT id, hn_id, title, url, score, timestamp, fetched_at,
-		       ai_analysis_done, is_interesting, reason, priority
+		       ai_analysis_done, is_interesting, reason, priority, category
 		FROM articles
 		WHERE is_interesting = 1
 		ORDER BY {}

@@ -4,9 +4,10 @@ An AI-powered Hacker News aggregator that automatically fetches, filters, and pr
 
 ## ✨ Features
 
-- **Automated Story Fetching**: Pulls top stories from Hacker News hourly.
+- **Automated Story Fetching**: Pulls top stories from Hacker News at configurable intervals.
 - **AI-Powered Filtering**: Uses Ollama to analyze articles based on your configurable persona.
 - **Personalized Prioritization**: Stories are ranked (1 to 5) based on relevance to your specific interests.
+- **Smart Categorization**: AI automatically categorizes articles using your custom category list.
 - **Modern Web Interface**: Clean, responsive UI built with Leptos (Rust) featuring dark/light mode.
 - **Background Processing**: Fully automated background processing via a dedicated worker.
 
@@ -36,6 +37,10 @@ make setup
 # Configure your persona (what you care about)
 cp config/persona.example.txt config/persona.txt
 # Edit config/persona.txt with your own bio/interests
+
+# Configure categories for AI classification
+cp config/categories.example.txt config/categories.txt
+# Edit config/categories.txt to customize article categories
 
 # Set up environment variables
 cp .env.example .env
@@ -92,9 +97,12 @@ services:
       - OLLAMA_URL=http://192.168.1.XX:11434 # IP of your Ollama server
       - OLLAMA_MODEL=qwen2.5:7b
       - RUST_LOG=info
+      - FETCH_INTERVAL_MINUTES=60
+      - TOP_STORIES_COUNT=15
     volumes:
       # IMPORTANT: Use ABSOLUTE paths on NAS
       - /mnt/tank/apps/hn-aggregator/config/persona.txt:/app/persona.txt:ro
+      - /mnt/tank/apps/hn-aggregator/config/categories.txt:/app/categories.txt:ro
       - /mnt/tank/apps/hn-aggregator/db-data:/data
     restart: unless-stopped
 ```
@@ -104,8 +112,22 @@ services:
 ## ⚙️ Configuration
 
 ### Persona (`config/persona.txt`)
-The AI uses this text to score articles. 
+The AI uses this text to score articles.
 **Example:** *"I am a software engineer interested in Rust, distributed systems and developer tools. I also enjoy reading about open-source AI advancements."*
+
+### Categories (`config/categories.txt`)
+The AI uses this list to categorize articles. Each category should be on a separate line.
+
+**Example:**
+```
+Programming Languages
+Web Development
+AI & Machine Learning
+Security & Privacy
+Other
+```
+
+The AI will choose the most appropriate category from this list. If no category fits, it will use "Other".
 
 ### Environment Variables
 | Variable | Description | Default |
@@ -114,6 +136,9 @@ The AI uses this text to score articles.
 | `OLLAMA_URL` | URL of your Ollama API. | `http://localhost:11434` |
 | `OLLAMA_MODEL` | The model used for analysis (e.g., qwen2.5:7b). | `qwen2.5:7b` |
 | `LEPTOS_SITE_ADDR` | The internal address the app listens on. | `0.0.0.0:30082` |
+| `FETCH_INTERVAL_MINUTES` | How often to fetch HN stories in minutes. | `60` |
+| `TOP_STORIES_COUNT` | Number of top stories to fetch each cycle. | `15` |
+| `RUST_LOG` | Logging level (trace, debug, info, warn, error). | `info` |
 
 ---
 

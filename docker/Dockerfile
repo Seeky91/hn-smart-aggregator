@@ -22,6 +22,7 @@ COPY style ./style
 COPY public ./public
 COPY migrations ./migrations
 COPY config/persona.txt ./
+COPY config/categories.txt ./
 COPY .env ./.env
 
 ENV SQLX_OFFLINE=true
@@ -44,6 +45,7 @@ COPY --from=builder /app/target/release/hn-smart-aggregator ./
 COPY --from=builder /app/target/site ./site
 COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/persona.txt ./
+COPY --from=builder /app/categories.txt ./
 
 # --- TES VARIABLES ENV REPRISES ET CORRIGÉES ---
 ENV LEPTOS_OUTPUT_NAME="hn-smart-aggregator"

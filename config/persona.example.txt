@@ -1,4 +1,4 @@
 Prompt for my persona (Explain what articles you want to keep. Don't remove the output structure)
 
 ### MANDATORY OUTPUT (STRICT JSON):
-{"relevant": boolean, "priority": integer, "reason": "string"}
+{"relevant": boolean, "priority": integer, "category": "category_name", "reason": "string"}

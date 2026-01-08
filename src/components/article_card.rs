@@ -15,6 +15,7 @@ pub fn ArticleCard(article: Article) -> impl IntoView {
 				{article.priority.map(|p| view! {
 					<span class="priority">"Priority: " {p} "/5"</span>
 				})}
+				<span>{article.category}</span>
 			</div>
 			{article.reason.as_ref().map(|reason| {
 				let r = reason.clone();

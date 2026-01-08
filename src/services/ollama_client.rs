@@ -36,10 +36,25 @@ struct MessageContent {
 }
 
 #[cfg(feature = "ssr")]
-pub async fn analyze_article(persona: &str, article: &Article, ollama_url: &str, model: &str) -> Result<AnalysisResult> {
+pub async fn analyze_article(persona: &str, article: &Article, categories: &[String], ollama_url: &str, model: &str) -> Result<AnalysisResult> {
+	let categories_str = categories.join(", ");
+
 	let prompt = format!(
-		"Analyze this Hacker News article and respond in JSON format with: {{\"relevant\": boolean, \"reason\": \"explanation\", \"priority\": number (1-5)}}\n\nPersona: {}\n\nArticle Title: {}\nURL: {}",
+		r#"Analyze this Hacker News article.
+Assign the most specific category from the list below.
+Use 'Other' ONLY for news that does not fit any other category.
+
+Output Format (JSON):
+{{"relevant": boolean, "reason": "explanation", "priority": number (1-5), "category": "category_name"}}
+
+Persona: {}
+
+Available Categories (Strict): {}
+
+Article Title: {}
+Article URL: {}"#,
 		persona,
+		categories_str,
 		article.title,
 		article.url.as_deref().unwrap_or("N/A")
 	);
@@ -58,7 +73,30 @@ pub async fn analyze_article(persona: &str, article: &Article, ollama_url: &str,
 		.await
 		.context("Failed to parse Ollama response")?;
 
-	let analysis: AnalysisResult = serde_json::from_str(&response.message.content).context("Failed to parse analysis JSON")?;
+	let content = &response.message.content;
+
+	// Try to extract JSON from response (in case there's extra text)
+	let json_str = extract_json(content);
+
+	// Log for debugging if parsing fails
+	let analysis: AnalysisResult = serde_json::from_str(&json_str).map_err(|e| {
+		tracing::error!("Failed to parse JSON. Error: {}. Raw content: {}", e, content);
+		anyhow::anyhow!("Failed to parse analysis JSON")
+	})?;
 
 	Ok(analysis)
+}
+
+#[cfg(feature = "ssr")]
+fn extract_json(content: &str) -> String {
+	// Try to find JSON object in the content
+	if let Some(start) = content.find('{') {
+		if let Some(end) = content.rfind('}') {
+			if start < end {
+				return content[start..=end].to_string();
+			}
+		}
+	}
+	// If no JSON found, return original content
+	content.to_string()
 }
