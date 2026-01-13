@@ -1,8 +1,18 @@
 use crate::db::models::{SortDirection, SortField};
+use crate::server_fns::articles::get_categories;
 use leptos::prelude::*;
 
 #[component]
-pub fn SortControls(sort_field: Signal<SortField>, set_sort_field: WriteSignal<SortField>, sort_direction: Signal<SortDirection>, set_sort_direction: WriteSignal<SortDirection>) -> impl IntoView {
+pub fn SortControls(
+	sort_field: Signal<SortField>,
+	set_sort_field: WriteSignal<SortField>,
+	sort_direction: Signal<SortDirection>,
+	set_sort_direction: WriteSignal<SortDirection>,
+	selected_category: Signal<String>,
+	set_selected_category: WriteSignal<String>,
+) -> impl IntoView {
+	let categories_resource = Resource::new(|| (), |_| get_categories());
+
 	view! {
 		<div class="sort-controls">
 			<label for="sort-field">"Sort by:"</label>
@@ -49,6 +59,41 @@ pub fn SortControls(sort_field: Signal<SortField>, set_sort_field: WriteSignal<S
 						SortField::Priority => "Lowest first",
 					}}
 				</option>
+			</select>
+
+			<select
+				id="category-field"
+				class="sort-select"
+				on:change=move |ev| {set_selected_category.set(event_target_value(&ev));}
+			>
+				<option value="" selected=move || selected_category.get().is_empty()>"All categories"</option>
+				<Suspense fallback=|| view! { <option>"Loading…"</option> }>
+					{move || Suspend::new(async move {
+						let res = categories_resource.await;
+						match res {
+							Ok(cats) => {
+								cats.into_iter()
+									.map(|cat| {
+										let cat_for_attr = cat.clone();
+										let cat_for_logic = cat.clone();
+										let is_selected = move || selected_category.get() == cat_for_logic;
+
+										view! {
+											<option
+												value=cat_for_attr
+												selected=is_selected
+											>
+												{cat}
+											</option>
+										}
+									})
+									.collect_view()
+									.into_any()
+							}
+							Err(_) => view! { <option>"Error"</option> }.into_any(),
+						}
+					})}
+				</Suspense>
 			</select>
 		</div>
 	}

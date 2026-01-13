@@ -7,7 +7,7 @@ use leptos_router::{
 
 use crate::components::{article_list::ArticleList, sort_controls::SortControls, theme_toggle::ThemeToggle};
 use crate::db::models::{SortDirection, SortField};
-use crate::server_fns::articles::get_interesting_articles;
+use crate::server_fns::articles::{get_interesting_articles};
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
 	view! {
@@ -52,12 +52,11 @@ pub fn App() -> impl IntoView {
 
 #[component]
 fn HomePage(dark_mode: Signal<bool>, set_dark_mode: WriteSignal<bool>) -> impl IntoView {
-	// Create sorting signals with defaults
 	let (sort_field, set_sort_field) = signal(SortField::Date);
 	let (sort_direction, set_sort_direction) = signal(SortDirection::Descending);
+	let (selected_category, set_selected_category) = signal(String::new());
 
-	// Create a resource that depends on sort parameters
-	let articles = Resource::new(move || (sort_field.get(), sort_direction.get()), |(field, direction)| get_interesting_articles(field, direction));
+	let articles = Resource::new(move || (sort_field.get(), sort_direction.get(), selected_category.get()), |(field, direction, cat)| get_interesting_articles(field, direction, cat));
 
 	view! {
 		<div class="container">
@@ -71,9 +70,11 @@ fn HomePage(dark_mode: Signal<bool>, set_dark_mode: WriteSignal<bool>) -> impl I
 				set_sort_field=set_sort_field
 				sort_direction=sort_direction.into()
 				set_sort_direction=set_sort_direction
+				selected_category=selected_category.into()
+				set_selected_category=set_selected_category
 			/>
 
-			<Suspense fallback=|| view! { <div class="loading">"Loading articles..."</div> }>
+			<Suspense fallback=|| view! { <div class="loading">"Loading articles…"</div> }>
 				{move || {
 					articles.get().map(|result| {
 						match result {

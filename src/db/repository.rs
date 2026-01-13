@@ -36,8 +36,7 @@ pub async fn upsert_article(pool: &SqlitePool, item: &HnItem) -> Result<()> {
 pub async fn get_unanalyzed_articles(pool: &SqlitePool) -> Result<Vec<Article>> {
 	let articles = sqlx::query_as::<_, Article>(
 		r#"
-		SELECT id, hn_id, title, url, score, timestamp, fetched_at,
-		       ai_analysis_done, is_interesting, reason, priority, category
+		SELECT id, hn_id, title, url, score, timestamp, fetched_at, ai_analysis_done, is_interesting, reason, priority, category
 		FROM articles
 		WHERE ai_analysis_done = 0
 		ORDER BY fetched_at DESC
@@ -54,11 +53,7 @@ pub async fn update_analysis(pool: &SqlitePool, article_id: i64, analysis: Analy
 	sqlx::query(
 		r#"
 		UPDATE articles
-		SET ai_analysis_done = 1,
-		    is_interesting = ?,
-		    reason = ?,
-		    priority = ?,
-		    category = ?
+		SET ai_analysis_done = 1, is_interesting = ?, reason = ?, priority = ?, category = ?
 		WHERE id = ?
 		"#,
 	)
@@ -74,7 +69,7 @@ pub async fn update_analysis(pool: &SqlitePool, article_id: i64, analysis: Analy
 }
 
 #[cfg(feature = "ssr")]
-pub async fn get_interesting_articles(pool: &SqlitePool, sort_field: SortField, sort_direction: SortDirection) -> Result<Vec<Article>> {
+pub async fn get_interesting_articles(pool: &SqlitePool, sort_field: SortField, sort_direction: SortDirection, category: String) -> Result<Vec<Article>> {
 	// Build ORDER BY clause dynamically
 	let order_by = match sort_field {
 		SortField::Date => match sort_direction {
@@ -93,17 +88,16 @@ pub async fn get_interesting_articles(pool: &SqlitePool, sort_field: SortField, 
 
 	let query = format!(
 		r#"
-		SELECT id, hn_id, title, url, score, timestamp, fetched_at,
-		       ai_analysis_done, is_interesting, reason, priority, category
+		SELECT id, hn_id, title, url, score, timestamp, fetched_at, ai_analysis_done, is_interesting, reason, priority, category
 		FROM articles
-		WHERE is_interesting = 1
+		WHERE is_interesting = 1 AND ($1 = '' OR category = $1)
 		ORDER BY {}
 		LIMIT 50
 		"#,
 		order_by
 	);
 
-	let articles = sqlx::query_as::<_, Article>(&query).fetch_all(pool).await?;
+	let articles = sqlx::query_as::<_, Article>(&query).bind(category).fetch_all(pool).await?;
 
 	Ok(articles)
 }

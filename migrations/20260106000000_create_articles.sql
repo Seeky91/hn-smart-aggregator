@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS articles (
 	ai_analysis_done BOOLEAN NOT NULL DEFAULT 0,
 	is_interesting BOOLEAN NOT NULL DEFAULT 0,
 	reason TEXT,
+	category TEXT DEFAULT NULL,
 	priority INTEGER DEFAULT NULL,
 	UNIQUE(hn_id)
 );
