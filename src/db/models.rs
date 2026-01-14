@@ -46,6 +46,12 @@ fn default_category() -> String {
 	"Other".to_string()
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
+pub struct CategoryCount {
+	pub category: String,
+	pub count: i32,
+}
+
 // Sorting enums (shared between client and server)
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, PartialEq)]
 pub enum SortField {

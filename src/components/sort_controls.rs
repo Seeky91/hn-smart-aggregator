@@ -1,5 +1,5 @@
-use crate::db::models::{SortDirection, SortField};
-use crate::server_fns::articles::get_categories;
+use crate::db::models::{CategoryCount, SortDirection, SortField};
+use crate::server_fns::articles::get_categories_with_counts;
 use leptos::prelude::*;
 
 #[component]
@@ -11,7 +11,7 @@ pub fn SortControls(
 	selected_category: Signal<String>,
 	set_selected_category: WriteSignal<String>,
 ) -> impl IntoView {
-	let categories_resource = Resource::new(|| (), |_| get_categories());
+	let categories_resource = Resource::new(|| (), |_| get_categories_with_counts());
 
 	view! {
 		<div class="sort-controls">
@@ -76,14 +76,11 @@ pub fn SortControls(
 									.map(|cat| {
 										let cat_for_attr = cat.clone();
 										let cat_for_logic = cat.clone();
-										let is_selected = move || selected_category.get() == cat_for_logic;
+										let is_selected = move || selected_category.get() == cat_for_logic.category;
 
 										view! {
-											<option
-												value=cat_for_attr
-												selected=is_selected
-											>
-												{cat}
+											<option disabled={cat.count == 0} value=cat_for_attr.category selected=is_selected>
+												{format!("{} ({})", cat.category, cat.count)}
 											</option>
 										}
 									})
