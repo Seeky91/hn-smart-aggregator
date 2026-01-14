@@ -1,4 +1,4 @@
-use crate::db::models::{CategoryCount, SortDirection, SortField};
+use crate::db::models::{SortDirection, SortField};
 use crate::server_fns::articles::get_categories_with_counts;
 use leptos::prelude::*;
 
