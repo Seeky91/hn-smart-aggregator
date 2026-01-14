@@ -16,7 +16,7 @@ RUN rustup target add wasm32-unknown-unknown
 WORKDIR /app
 
 COPY Cargo.toml Cargo.lock ./
-COPY sqlx-data.json* ./ 
+COPY .sqlx ./.sqlx
 COPY src ./src
 COPY style ./style
 COPY public ./public

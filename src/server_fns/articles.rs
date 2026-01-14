@@ -21,9 +21,10 @@ pub async fn get_categories_with_counts() -> Result<Vec<CategoryCount>, ServerFn
 	let state = expect_context::<AppState>();
 	let config = Config::load().await.map_err(|e| ServerFnError::new(e.to_string()))?;
 
-	let db_counts = sqlx::query!(
+	let db_counts = sqlx::query_as!(
+		CategoryCount,
 		r#"
-		SELECT category as "category!", COUNT(*) as "count!"
+		SELECT category as "category!", COUNT(*) as "count!: i32"
 		FROM articles
 		WHERE is_interesting = 1 AND category IS NOT NULL AND category != ''
 		GROUP BY category
@@ -31,7 +32,7 @@ pub async fn get_categories_with_counts() -> Result<Vec<CategoryCount>, ServerFn
 	)
 	.fetch_all(&state.db_pool)
 	.await
-	.map_err(|e| ServerFnError::new(e.to_string()))?;
+	.map_err(|e: sqlx::Error| ServerFnError::new(e.to_string()))?;
 
 	let counts_map: HashMap<String, i32> = db_counts.into_iter().map(|row| (row.category, row.count as i32)).collect();
 
